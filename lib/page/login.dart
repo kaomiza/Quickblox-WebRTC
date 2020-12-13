@@ -35,17 +35,24 @@ class _LoginState extends State<Login> {
     } catch (e) {
       print(e.toString());
     }
-    try {
-      await QB.webrtc.init();
-    } catch (e) {
-      print(e.toString());
-    }
+
     try {
       QBLoginResult result = await QB.auth.login(login, password);
-      qbUser = result.qbUser;
-      qbSession = result.qbSession;
+
+      qbUser = await result.qbUser;
+      qbSession = await result.qbSession;
+      await QB.chat.connect(qbUser.id, 'quickblox');
+      // bool connected = await QB.chat.isConnected();
+      await QB.webrtc.init();
+      // print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
       print(qbSession.tokenExpirationDate);
       print(qbUser.fullName);
+
+
+      // print("check chat server ====================================="+connected.toString());
+      // print("ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc");
+
+
       Navigator.push(
           context,
           MaterialPageRoute(
@@ -53,11 +60,6 @@ class _LoginState extends State<Login> {
                     qbSession: qbSession,
                     qbUser: qbUser,
                   )));
-    } catch (e) {
-      print(e.toString());
-    }
-    try {
-      await QB.chat.connect(qbUser.id, 'quickblox');
     } catch (e) {
       print(e.toString());
     }

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +11,7 @@ import 'package:quickblox_sdk/models/qb_user.dart';
 import 'package:quickblox_sdk/quickblox_sdk.dart';
 import 'package:quickblox_sdk/webrtc/constants.dart';
 import 'package:quickblox_sdk/webrtc/rtc_video_view.dart';
+import 'package:http/http.dart' as http;
 
 class Home extends StatefulWidget {
   Home({Key key, this.qbUser, this.qbSession}) : super(key: key);
@@ -21,9 +23,15 @@ class Home extends StatefulWidget {
   State<StatefulWidget> createState() {
     return _HomeState();
   }
+}
+
+class _HomeState extends State<Home> {
+  void initState() {
+    super.initState();
+  }
+
   RTCVideoViewController _localVideoViewController;
   RTCVideoViewController _remoteVideoViewController;
-
 
   void _onLocalVideoViewCreated(RTCVideoViewController controller) {
     _localVideoViewController = controller;
@@ -33,13 +41,6 @@ class Home extends StatefulWidget {
     _remoteVideoViewController = controller;
   }
 
-}
-
-
-class _HomeState extends State<Home> {
-  void initState() {
-    super.initState();
-  }
   static const CHANNEL_NAME = "FlutterQBUsersChannel";
   static const _usersModule = const MethodChannel(CHANNEL_NAME);
 
@@ -55,7 +56,6 @@ class _HomeState extends State<Home> {
     print(userData);
     return userData;
   }
-
 
   Future<List<Users>> _getAllUserById() async {
     List<Users> userList;
@@ -102,23 +102,55 @@ class _HomeState extends State<Home> {
                   },
                 ),
                 Container(
+                    child: new Container(
                   margin: new EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 10.0),
                   width: 160.0,
                   height: 160.0,
                   child: RTCVideoView(
-                    onVideoViewCreated: widget._onLocalVideoViewCreated,
+                    onVideoViewCreated: _onLocalVideoViewCreated,
                   ),
                   decoration: new BoxDecoration(color: Colors.black54),
+                )),
+                Container(
+                  child: new Container(
+                    margin: new EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 10.0),
+                    width: 160.0,
+                    height: 160.0,
+                    child: RTCVideoView(
+                      onVideoViewCreated: _onRemoteVideoViewCreated,
+                    ),
+                    decoration: new BoxDecoration(color: Colors.black54),
+                  ),
                 ),
                 Container(
-                  margin: new EdgeInsets.fromLTRB(10.0, 10.0, 10.0, 10.0),
-                  width: 160.0,
-                  height: 160.0,
-                  child: RTCVideoView(
-                    onVideoViewCreated: widget._onRemoteVideoViewCreated,
+                  child: RaisedButton(
+                    onPressed: () async {
+                      QBSession sessionG;
+                      try {
+                        QBSession session = await QB.auth.getSession();
+                        sessionG = session;
+
+                      } on PlatformException catch (e) {
+                        // Some error occured, look at the exception message for more details
+                      }
+                      var respone = await http.get("https://api.quickblox.com/session.json", headers: {
+                        "QB-Token":sessionG.token
+                      });
+                      print("-----------------------");
+                      var res = json.decode(respone.body);
+                      var sessionid = res["session"]["id"];
+                      var useid = res["session"]["user_id"];
+                      print(res);
+                      // int opponentId = 3928;
+
+                      Future<void> play() async {
+                        _localVideoViewController.play(sessionid, useid);
+                        // _remoteVideoViewController.play(sessionId, opponentId);
+                      }
+                      play();
+                    },
                   ),
-                  decoration: new BoxDecoration(color: Colors.black54),
-                )
+                ),
               ],
             ),
           ],
@@ -126,7 +158,6 @@ class _HomeState extends State<Home> {
       ),
     );
   }
-
 }
 
 class CustomQBUser {
