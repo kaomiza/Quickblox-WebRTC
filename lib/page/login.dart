@@ -22,6 +22,24 @@ class _LoginState extends State<Login> {
   void _loginToQuickBlox(String login, String password) async {
     QBUser qbUser;
     QBSession qbSession;
+    const String APP_ID = "79480";
+    const String AUTH_KEY = "uwMkDp7D4CJE4Bf";
+    const String AUTH_SECRET = "LKkdyCCDRm2rum6";
+    const String ACCOUNT_KEY = "ZpfibLk6TBkkkvQEoiBa";
+    const String API_ENDPOINT = ""; //optional
+    const String CHAT_ENDPOINT = ""; //optional
+
+    try {
+      await QB.settings.init(APP_ID, AUTH_KEY, AUTH_SECRET, ACCOUNT_KEY,
+          apiEndpoint: API_ENDPOINT, chatEndpoint: CHAT_ENDPOINT);
+    } catch (e) {
+      print(e.toString());
+    }
+    try {
+      await QB.webrtc.init();
+    } catch (e) {
+      print(e.toString());
+    }
     try {
       QBLoginResult result = await QB.auth.login(login, password);
       qbUser = result.qbUser;
@@ -32,9 +50,14 @@ class _LoginState extends State<Login> {
           context,
           MaterialPageRoute(
               builder: (context) => Home(
-                qbSession: qbSession,
-                qbUser: qbUser,
-              )));
+                    qbSession: qbSession,
+                    qbUser: qbUser,
+                  )));
+    } catch (e) {
+      print(e.toString());
+    }
+    try {
+      await QB.chat.connect(qbUser.id, 'quickblox');
     } catch (e) {
       print(e.toString());
     }
@@ -67,7 +90,7 @@ class _LoginState extends State<Login> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   TextFormField(
-                    onSaved: (value) => _username = value,    // <= NEW
+                    onSaved: (value) => _username = value, // <= NEW
                     decoration: const InputDecoration(
                       hintText: 'Enter your username',
                     ),
@@ -98,7 +121,7 @@ class _LoginState extends State<Login> {
                         final form = _formKey.currentState;
                         form.save();
                         if (_formKey.currentState.validate()) {
-                          _loginToQuickBlox(_username,_password);
+                          _loginToQuickBlox(_username, _password);
                           print(_password);
                           print(_username);
                         }
